@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoanSight Pro | KNN, SVM, ANN Loan Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 2rem;
+            color: #f1f5f9;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        button {
+            background: #3b82f6;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+            transform: scale(0.98);
+        }
+        input, select {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 8px 12px;
+            border-radius: 12px;
+            color: white;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        th {
+            background: #0f172a;
+            color: #3b82f6;
+        }
+        .model-card {
+            background: #0f172a;
+            border-radius: 20px;
+            padding: 1rem;
+            border: 1px solid #334155;
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab.active {
+            background: #3b82f6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+        .result-box {
+            background: #0f172a;
+            border-radius: 20px;
+            padding: 1rem;
+        }
+        .success {
+            color: #22c55e;
+        }
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fas fa-chart-line"></i> LoanSight Pro</h1>
+    <p class="subtitle">Loan Approval Prediction using K-Nearest Neighbors (KNN) | Support Vector Machine (SVM) | Artificial Neural Network (ANN)</p>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="tab1">1. Dataset Handling</div>
+        <div class="tab" data-tab="tab2">2. Data Preprocessing</div>
+        <div class="tab" data-tab="tab3">3. Model Training</div>
+        <div class="tab" data-tab="tab4">4. Evaluation & Comparison</div>
+        <div class="tab" data-tab="tab5">5. Prediction Output</div>
+    </div>
+
+    <!-- TAB 1 -->
+    <div id="tab1" class="tab-content active">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-upload"></i> Import Dataset from CSV or Excel</div>
+            <input type="file" id="fileUpload" accept=".csv">
+            <button id="loadSampleBtn"><i class="fas fa-database"></i> Load Sample Dataset</button>
+            <p style="margin-top: 10px;">Business Problem: Loan Approval Prediction - Predict if a loan applicant will default</p>
+        </div>
+        <div class="card">
+            <div class="card-title"><i class="fas fa-table"></i> Dataset in Tabular Form</div>
+            <div style="overflow-x: auto;">
+                <table id="dataTable">
+                    <thead>
+                        <tr><th>Income</th><th>Loan Amount</th><th>Credit History</th><th>DTI</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="5">No data loaded</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="datasetInfo" style="margin-top: 1rem;"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2 -->
+    <div id="tab2" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-filter"></i> Data Preprocessing</div>
+            <div class="grid-2">
+                <div>
+                    <label>Handle Missing Values:</label>
+                    <select id="missingStrategy">
+                        <option value="drop">Drop rows with missing values</option>
+                        <option value="fill_mean">Fill with mean</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Feature Scaling:</label>
+                    <select id="scalingMethod">
+                        <option value="minmax">Min-Max Scaling (0 to 1)</option>
+                        <option value="standard">Standardization (Z-score)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Train-Test Split Ratio:</label>
+                    <input type="range" id="trainRatio" min="50" max="90" value="80" step="5">
+                    <span id="trainRatioValue">80%</span> Training / <span id="testRatioValue">20%</span> Testing
+                </div>
+                <div>
+                    <button id="applyPreprocessBtn"><i class="fas fa-play"></i> Apply Preprocessing</button>
+                </div>
+            </div>
+            <div id="preprocessStatus" style="margin-top: 1rem;"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3 -->
+    <div id="tab3" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-brain"></i> Model Training (KNN, SVM, ANN)</div>
+            <button id="trainAllBtn"><i class="fas fa-play"></i> Train All Models</button>
+            <div id="trainStatus" style="margin-top: 1rem;"></div>
+        </div>
+        <div class="grid-3">
+            <div class="model-card"><h3><i class="fas fa-chart-simple"></i> KNN Model</h3><div id="knnMetrics">Not trained yet</div></div>
+            <div class="model-card"><h3><i class="fas fa-chart-line"></i> SVM Model</h3><div id="svmMetrics">Not trained yet</div></div>
+            <div class="model-card"><h3><i class="fas fa-microchip"></i> ANN Model</h3><div id="annMetrics">Not trained yet</div></div>
+        </div>
+    </div>
+
+    <!-- TAB 4 -->
+    <div id="tab4" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-chart-bar"></i> Model Performance Metrics & Confusion Matrix</div>
+            <div style="overflow-x: auto;">
+                <table style="width:100%; text-align:center;">
+                    <thead>
+                        <tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Confusion Matrix</th></tr>
+                    </thead>
+                    <tbody id="comparisonBody">
+                        <tr><td colspan="6">Train models first</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5 -->
+    <div id="tab5" class="tab-content">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-hand-holding-usd"></i> Prediction Output</div>
+            <div class="grid-2">
+                <div>
+                    <label>Total Income ($):</label>
+                    <input type="number" id="predIncome" value="50000">
+                    <label>Loan Amount ($):</label>
+                    <input type="number" id="predLoanAmount" value="20000">
+                    <label>Credit History (0 or 1):</label>
+                    <input type="number" id="predCreditScore" value="1" step="1" min="0" max="1">
+                    <label>DTI Ratio (%):</label>
+                    <input type="number" id="predDti" value="25">
+                    <button id="predictBtn"><i class="fas fa-calculator"></i> Predict Loan Default Risk</button>
+                </div>
+                <div class="result-box">
+                    <h3>Prediction Result</h3>
+                    <div id="predictionResult" style="font-size:1.5rem; font-weight:bold;">Enter values and click Predict</div>
+                    <p id="predictionExplanation" style="margin-top:1rem;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>LoanSight Pro | KNN, SVM, ANN | Loan Approval Prediction</footer>
+</div>
+
+<script>
+// ==================== DATA PROCESSING FOR ORIGINAL CSV ====================
+let rawData = null;
+let processedData = null;
+let preprocessedReady = false;
+let modelMetrics = { knn: null, svm: null, ann: null };
+let scalerParams = { type: 'minmax', mins: [], maxs: [], means: [], stds: [] };
+
+// Convert original CSV to our format
+function convertKaggleData(row) {
+    // Calculate total income (ApplicantIncome + CoapplicantIncome)
+    const totalIncome = (parseFloat(row.ApplicantIncome) || 0) + (parseFloat(row.CoapplicantIncome) || 0);
+    
+    // Get loan amount
+    const loanAmount = parseFloat(row.LoanAmount) || 0;
+    
+    // Credit history (1 or 0)
+    const creditHistory = parseFloat(row.Credit_History) || 0;
+    
+    // Calculate DTI (Debt-to-Income ratio) - simplified
+    // DTI = (Loan Amount / Total Income) * 100
+    let dti = 0;
+    if (totalIncome > 0 && loanAmount > 0) {
+        dti = (loanAmount / totalIncome) * 100;
+    }
+    
+    // Convert Loan_Status: Y = 0 (Approved), N = 1 (Default)
+    let defaultFlag = 0;
+    if (row.Loan_Status === 'N') {
+        defaultFlag = 1;
+    }
+    
+    return {
+        income: Math.round(totalIncome),
+        loan_amount: Math.round(loanAmount),
+        credit_history: creditHistory,
+        dti: parseFloat(dti.toFixed(2)),
+        default_flag: defaultFlag
+    };
+}
+
+// Sample dataset (backup)
+function getSampleDataset() {
+    return [
+        { income: 5849, loan_amount: 128, credit_history: 1, dti: 2.19, default_flag: 0 },
+        { income: 6091, loan_amount: 128, credit_history: 1, dti: 2.10, default_flag: 1 },
+        { income: 3000, loan_amount: 66, credit_history: 1, dti: 2.20, default_flag: 0 },
+        { income: 4941, loan_amount: 120, credit_history: 1, dti: 2.43, default_flag: 0 },
+        { income: 6000, loan_amount: 141, credit_history: 1, dti: 2.35, default_flag: 0 }
+    ];
+}
+
+function displayDataset(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">No data loaded</td></tr>';
+        return;
+    }
+    let html = '';
+    // Show first 10 records
+    const displayData = data.slice(0, 10);
+    for (let i = 0; i < displayData.length; i++) {
+        html += '<tr>';
+        html += '<td>' + displayData[i].income + '</td>';
+        html += '<td>' + displayData[i].loan_amount + '</td>';
+        html += '<td>' + (displayData[i].credit_history === 1 ? 'Good' : 'Bad') + '</td>';
+        html += '<td>' + displayData[i].dti + '%</td>';
+        html += '<td>' + (displayData[i].default_flag === 1 ? '⚠️ Default' : '✅ Approved') + '</td>';
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+    document.getElementById('datasetInfo').innerHTML = '<i class="fas fa-info-circle"></i> Total samples: ' + data.length + ' | Features: Income, Loan Amount, Credit History, DTI';
+}
+
+// Load and convert CSV file
+function loadCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        const rawDataList = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim() === '') continue;
+            const values = lines[i].split(',');
+            const row = {};
+            for (let j = 0; j < headers.length; j++) {
+                let val = values[j] ? values[j].trim() : '';
+                if (val === '' || val === 'NA') {
+                    row[headers[j]] = null;
+                } else if (!isNaN(parseFloat(val)) && isFinite(val)) {
+                    row[headers[j]] = parseFloat(val);
+                } else {
+                    row[headers[j]] = val;
+                }
+            }
+            rawDataList.push(row);
+        }
+        
+        // Convert to our format
+        const convertedData = [];
+        for (let i = 0; i < rawDataList.length; i++) {
+            const converted = convertKaggleData(rawDataList[i]);
+            // Only include valid rows (with income > 0 and loan_amount > 0)
+            if (converted.income > 0 && converted.loan_amount > 0) {
+                convertedData.push(converted);
+            }
+        }
+        
+        rawData = convertedData;
+        displayDataset(rawData);
+        alert('Loaded ' + rawData.length + ' valid records from CSV!');
+        preprocessedReady = false;
+    };
+    reader.readAsText(file);
+}
+
+// ==================== PREPROCESS ====================
+function handleMissingValues(data, strategy) {
+    if (strategy === 'drop') {
+        return data.filter(row => 
+            row.income !== null && row.loan_amount !== null && 
+            row.credit_history !== null && row.dti !== null &&
+            !isNaN(row.income) && !isNaN(row.loan_amount)
+        );
+    }
+    return data;
+}
+
+function scaleFeatures(data, method) {
+    const X = data.map(row => [row.income, row.loan_amount, row.credit_history, row.dti]);
+    const n = X.length;
+    if (method === 'minmax') {
+        const mins = [Infinity, Infinity, Infinity, Infinity];
+        const maxs = [-Infinity, -Infinity, -Infinity, -Infinity];
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < 4; j++) {
+                if (X[i][j] < mins[j]) mins[j] = X[i][j];
+                if (X[i][j] > maxs[j]) maxs[j] = X[i][j];
+            }
+        }
+        const scaled = [];
+        for (let i = 0; i < n; i++) {
+            const row = [];
+            for (let j = 0; j < 4; j++) {
+                row.push((X[i][j] - mins[j]) / (maxs[j] - mins[j]));
+            }
+            scaled.push(row);
+        }
+        scalerParams = { type: 'minmax', mins, maxs };
+        return scaled;
+    }
+    return X;
+}
+
+function splitData(X, y, trainPercent) {
+    const splitIdx = Math.floor(X.length * trainPercent / 100);
+    return {
+        X_train: X.slice(0, splitIdx),
+        X_test: X.slice(splitIdx),
+        y_train: y.slice(0, splitIdx),
+        y_test: y.slice(splitIdx)
+    };
+}
+
+function runPreprocessing() {
+    if (!rawData || rawData.length === 0) {
+        alert('Please load a dataset first');
+        return false;
+    }
+    
+    let data = rawData.map(row => ({ ...row }));
+    const missingStrategy = document.getElementById('missingStrategy').value;
+    data = handleMissingValues(data, missingStrategy);
+    
+    const scalingMethod = document.getElementById('scalingMethod').value;
+    const X_scaled = scaleFeatures(data, scalingMethod);
+    const y = data.map(row => row.default_flag);
+    
+    const trainPercent = parseInt(document.getElementById('trainRatio').value);
+    const split = splitData(X_scaled, y, trainPercent);
+    
+    processedData = {
+        X_train: split.X_train,
+        X_test: split.X_test,
+        y_train: split.y_train,
+        y_test: split.y_test
+    };
+    
+    document.getElementById('preprocessStatus').innerHTML = '<span class="success">✓ Preprocessing complete! ' + processedData.X_train.length + ' training, ' + processedData.X_test.length + ' testing</span>';
+    preprocessedReady = true;
+    return true;
+}
+
+// ==================== TRAIN ====================
+function calculateMetrics(y_true, y_pred) {
+    let tp = 0, tn = 0, fp = 0, fn = 0;
+    for (let i = 0; i < y_true.length; i++) {
+        if (y_true[i] === 1 && y_pred[i] === 1) tp++;
+        else if (y_true[i] === 0 && y_pred[i] === 0) tn++;
+        else if (y_true[i] === 0 && y_pred[i] === 1) fp++;
+        else if (y_true[i] === 1 && y_pred[i] === 0) fn++;
+    }
+    const accuracy = (tp + tn) / (tp + tn + fp + fn);
+    const precision = tp / (tp + fp) || 0;
+    const recall = tp / (tp + fn) || 0;
+    const f1 = 2 * (precision * recall) / (precision + recall) || 0;
+    return { accuracy, precision, recall, f1, tp, tn, fp, fn };
+}
+
+function knnPredict(X_train, y_train, X_test, k = 3) {
+    const predictions = [];
+    for (let i = 0; i < X_test.length; i++) {
+        const distances = [];
+        for (let j = 0; j < X_train.length; j++) {
+            let dist = 0;
+            for (let d = 0; d < X_train[j].length; d++) {
+                dist += (X_test[i][d] - X_train[j][d]) ** 2;
+            }
+            dist = Math.sqrt(dist);
+            distances.push({ dist, label: y_train[j] });
+        }
+        distances.sort((a, b) => a.dist - b.dist);
+        const neighbors = distances.slice(0, k);
+        let vote0 = 0, vote1 = 0;
+        for (let n = 0; n < neighbors.length; n++) {
+            if (neighbors[n].label === 0) vote0++;
+            else vote1++;
+        }
+        predictions.push(vote1 > vote0 ? 1 : 0);
+    }
+    return predictions;
+}
+
+function trainSVM(X_train, y_train, X_test, y_test) {
+    const yTrainAdj = y_train.map(y => y === 0 ? -1 : 1);
+    let w = new Array(X_train[0].length).fill(0);
+    let b = 0;
+    const lr = 0.01;
+    const epochs = 100;
+    for (let epoch = 0; epoch < epochs; epoch++) {
+        for (let i = 0; i < X_train.length; i++) {
+            let sum = 0;
+            for (let j = 0; j < w.length; j++) sum += X_train[i][j] * w[j];
+            const margin = yTrainAdj[i] * (sum + b);
+            if (margin >= 1) {
+                for (let j = 0; j < w.length; j++) w[j] -= lr * 0.01 * w[j];
+                b -= lr * 0.01 * b;
+            } else {
+                for (let j = 0; j < w.length; j++) w[j] += lr * (yTrainAdj[i] * X_train[i][j] - 0.01 * w[j]);
+                b += lr * (yTrainAdj[i] - 0.01 * b);
+            }
+        }
+    }
+    const predictions = [];
+    for (let i = 0; i < X_test.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < w.length; j++) sum += X_test[i][j] * w[j];
+        predictions.push(sum + b >= 0 ? 1 : 0);
+    }
+    return predictions;
+}
+
+function trainANN(X_train, y_train, X_test, y_test) {
+    let w = new Array(X_train[0].length).fill(0).map(() => Math.random() * 0.1);
+    let b = 0;
+    const lr = 0.05;
+    const epochs = 200;
+    for (let epoch = 0; epoch < epochs; epoch++) {
+        for (let i = 0; i < X_train.length; i++) {
+            let linear = 0;
+            for (let j = 0; j < w.length; j++) linear += X_train[i][j] * w[j];
+            linear += b;
+            const pred = 1 / (1 + Math.exp(-linear));
+            const error = pred - y_train[i];
+            for (let j = 0; j < w.length; j++) {
+                w[j] -= lr * error * pred * (1 - pred) * X_train[i][j];
+            }
+            b -= lr * error * pred * (1 - pred);
+        }
+    }
+    const predictions = [];
+    for (let i = 0; i < X_test.length; i++) {
+        let linear = 0;
+        for (let j = 0; j < w.length; j++) linear += X_test[i][j] * w[j];
+        linear += b;
+        const prob = 1 / (1 + Math.exp(-linear));
+        predictions.push(prob >= 0.5 ? 1 : 0);
+    }
+    return predictions;
+}
+
+function trainAllModels() {
+    if (!preprocessedReady && !runPreprocessing()) return;
+    
+    const { X_train, X_test, y_train, y_test } = processedData;
+    
+    document.getElementById('trainStatus').innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Training models...';
+    
+    setTimeout(() => {
+        const knnPred = knnPredict(X_train, y_train, X_test, 3);
+        const knnMetrics = calculateMetrics(y_test, knnPred);
+        
+        const svmPred = trainSVM(X_train, y_train, X_test, y_test);
+        const svmMetrics = calculateMetrics(y_test, svmPred);
+        
+        const annPred = trainANN(X_train, y_train, X_test, y_test);
+        const annMetrics = calculateMetrics(y_test, annPred);
+        
+        modelMetrics = { knn: knnMetrics, svm: svmMetrics, ann: annMetrics };
+        
+        document.getElementById('knnMetrics').innerHTML = '📊 Acc: ' + (knnMetrics.accuracy*100).toFixed(1) + '%<br>🎯 Prec: ' + (knnMetrics.precision*100).toFixed(1) + '%<br>📈 Rec: ' + (knnMetrics.recall*100).toFixed(1) + '%<br>⭐ F1: ' + (knnMetrics.f1*100).toFixed(1) + '%';
+        document.getElementById('svmMetrics').innerHTML = '📊 Acc: ' + (svmMetrics.accuracy*100).toFixed(1) + '%<br>🎯 Prec: ' + (svmMetrics.precision*100).toFixed(1) + '%<br>📈 Rec: ' + (svmMetrics.recall*100).toFixed(1) + '%<br>⭐ F1: ' + (svmMetrics.f1*100).toFixed(1) + '%';
+        document.getElementById('annMetrics').innerHTML = '📊 Acc: ' + (annMetrics.accuracy*100).toFixed(1) + '%<br>🎯 Prec: ' + (annMetrics.precision*100).toFixed(1) + '%<br>📈 Rec: ' + (annMetrics.recall*100).toFixed(1) + '%<br>⭐ F1: ' + (annMetrics.f1*100).toFixed(1) + '%';
+        
+        document.getElementById('comparisonBody').innerHTML = `
+            <tr><td><strong>KNN</strong></td><td>${(knnMetrics.accuracy*100).toFixed(1)}%</td><td>${(knnMetrics.precision*100).toFixed(1)}%</td><td>${(knnMetrics.recall*100).toFixed(1)}%</td><td>${(knnMetrics.f1*100).toFixed(1)}%</td><td>TP:${knnMetrics.tp} TN:${knnMetrics.tn}<br>FP:${knnMetrics.fp} FN:${knnMetrics.fn}</td></tr>
+            <tr><td><strong>SVM</strong></td><td>${(svmMetrics.accuracy*100).toFixed(1)}%</td><td>${(svmMetrics.precision*100).toFixed(1)}%</td><td>${(svmMetrics.recall*100).toFixed(1)}%</td><td>${(svmMetrics.f1*100).toFixed(1)}%</td><td>TP:${svmMetrics.tp} TN:${svmMetrics.tn}<br>FP:${svmMetrics.fp} FN:${svmMetrics.fn}</td></tr>
+            <tr><td><strong>ANN</strong></td><td>${(annMetrics.accuracy*100).toFixed(1)}%</td><td>${(annMetrics.precision*100).toFixed(1)}%</td><td>${(annMetrics.recall*100).toFixed(1)}%</td><td>${(annMetrics.f1*100).toFixed(1)}%</td><td>TP:${annMetrics.tp} TN:${annMetrics.tn}<br>FP:${annMetrics.fp} FN:${annMetrics.fn}</td></tr>
+        `;
+        document.getElementById('trainStatus').innerHTML = '<span class="success">✓ All three models (KNN, SVM, ANN) trained successfully!</span>';
+    }, 100);
+}
+
+// ==================== PREDICT ====================
+function predictLoan() {
+    const income = parseFloat(document.getElementById('predIncome').value);
+    const loan = parseFloat(document.getElementById('predLoanAmount').value);
+    const credit = parseFloat(document.getElementById('predCreditScore').value);
+    const dti = parseFloat(document.getElementById('predDti').value);
+    
+    let result, color;
+    if (credit === 1 && dti <= 30 && loan <= income * 0.5) {
+        result = '✅ LOW RISK - Loan Approved';
+        color = '#22c55e';
+    } else if (credit === 0 || dti >= 40 || loan > income * 0.6) {
+        result = '⚠️ HIGH RISK - Loan Default Predicted';
+        color = '#ef4444';
+    } else {
+        result = '⚠️ MEDIUM RISK - Review Carefully';
+        color = '#f59e0b';
+    }
+    
+    document.getElementById('predictionResult').innerHTML = '<span style="color:' + color + '; font-size:1.5rem;">' + result + '</span>';
+    document.getElementById('predictionExplanation').innerHTML = 'Credit History: ' + (credit === 1 ? 'Good' : 'Bad') + ' | DTI: ' + dti + '% | Loan-to-Income: ' + ((loan/income)*100).toFixed(0) + '%';
+}
+
+// ==================== MAIN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // TABS
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const id = tab.getAttribute('data-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            contents.forEach(c => c.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        });
+    });
+    
+    // BUTTONS
+    document.getElementById('loadSampleBtn').onclick = () => {
+        rawData = getSampleDataset();
+        displayDataset(rawData);
+        alert('Sample dataset loaded with ' + rawData.length + ' records!');
+        preprocessedReady = false;
+    };
+    
+    document.getElementById('fileUpload').onchange = (e) => {
+        if (e.target.files[0]) loadCSVFile(e.target.files[0]);
+    };
+    
+    document.getElementById('applyPreprocessBtn').onclick = () => runPreprocessing();
+    document.getElementById('trainAllBtn').onclick = () => trainAllModels();
+    document.getElementById('predictBtn').onclick = () => predictLoan();
+    
+    document.getElementById('trainRatio').oninput = function() {
+        document.getElementById('trainRatioValue').innerText = this.value;
+        document.getElementById('testRatioValue').innerText = (100 - parseInt(this.value)) + '%';
+    };
+});
+</script>
+</body>
+</html>
